@@ -24,10 +24,19 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-`PyAudio` 설치가 실패하면 아래 명령을 먼저 실행하세요.
+터미널 앱에서 직접 마이크 입력을 쓰는 `python main.py` 모드까지 설치하려면 `PyAudio`가 필요합니다.
 
 ```bash
 brew install portaudio
+pip install -r requirements-voice.txt
+```
+
+`PyAudio` 설치가 실패하면 아래처럼 include/library 경로를 명시합니다.
+
+```bash
+brew install portaudio
+export CPPFLAGS="-I$(brew --prefix portaudio)/include"
+export LDFLAGS="-L$(brew --prefix portaudio)/lib"
 pip install PyAudio
 ```
 
