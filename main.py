@@ -1,41 +1,46 @@
-from pathlib import Path
+from __future__ import annotations
 
-from dotenv import load_dotenv
+from actions import JarvisActions
+from brain import JarvisBrain, OllamaError
+from memory import ScheduleMemory
+from utils import print_box, safe_json_dumps
 
-from brain import JarvisBrain
-from tts import Speaker
-from voice import VoiceInput
 
-
-EXIT_WORDS = {"종료", "그만", "꺼져", "멈춰", "끝내"}
+EXIT_WORDS = {"exit", "quit", "q", "종료", "그만", "끝"}
 
 
 def main() -> None:
-    load_dotenv(Path(__file__).resolve().parent / ".env")
+    brain = JarvisBrain(model="qwen3:4b")
+    memory = ScheduleMemory()
+    actions = JarvisActions(brain=brain, memory=memory)
 
-    voice = VoiceInput(wake_word="자비스")
-    brain = JarvisBrain()
-    speaker = Speaker()
-
-    speaker.say("자비스가 준비되었습니다.")
+    print("Jarvis 로컬 AI 비서가 시작되었습니다.")
+    print("Ollama 모델: qwen3:4b")
+    print("종료하려면 '종료' 또는 'exit'를 입력하세요.\n")
 
     while True:
-        voice.wait_for_wake_word()
-        speaker.say("네, 듣고 있습니다.")
-
-        command = voice.listen_command()
-        if not command:
-            speaker.say("명령을 잘 듣지 못했습니다. 다시 불러 주세요.")
-            continue
-
-        print(f"명령: {command}")
-        normalized = command.replace(" ", "")
-        if any(word in normalized for word in EXIT_WORDS):
-            speaker.say("자비스를 종료합니다.")
+        try:
+            user_text = input("You > ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nJarvis를 종료합니다.")
             break
 
-        answer = brain.ask(command)
-        speaker.say(answer)
+        if not user_text:
+            continue
+        if user_text.lower() in EXIT_WORDS:
+            print("Jarvis를 종료합니다.")
+            break
+
+        try:
+            intent = brain.analyze_intent(user_text)
+            print_box("Intent", safe_json_dumps({"intent": intent.intent, "content": intent.content}))
+
+            result = actions.run(intent.intent, intent.content)
+            print_box(result.title, result.content)
+        except OllamaError as exc:
+            print_box("Ollama 오류", str(exc))
+        except Exception as exc:
+            print_box("오류", f"처리 중 예상치 못한 오류가 발생했습니다: {exc}")
 
 
 if __name__ == "__main__":
