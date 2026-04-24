@@ -26,9 +26,26 @@ class AskResponse(BaseModel):
     answer: str
 
 
+class HealthResponse(BaseModel):
+    env_file: str
+    openai_key_set: bool
+    tavily_key_set: bool
+
+
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/api/health", response_model=HealthResponse)
+def health() -> HealthResponse:
+    import os
+
+    return HealthResponse(
+        env_file=str(BASE_DIR / ".env"),
+        openai_key_set=bool(os.getenv("OPENAI_API_KEY")),
+        tavily_key_set=bool(os.getenv("TAVILY_API_KEY")),
+    )
 
 
 @app.post("/api/ask", response_model=AskResponse)
