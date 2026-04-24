@@ -1,30 +1,23 @@
-# Local Jarvis with Ollama
+# Jarvis 1.0
 
-MacOS에서 Ollama `qwen3:4b` 모델로 실행하는 로컬 AI 비서입니다. OpenAI API를 사용하지 않습니다.
+Jarvis 1.0 is a local AI assistant for macOS. It uses Ollama instead of the OpenAI API, analyzes user intent as JSON, executes local actions, and includes a cyber/dreamlike web UI with a dotted 3D animated core.
 
-## 파일 구조
+## Features
 
-```text
-jarvis_assistant/
-├── main.py
-├── brain.py
-├── actions.py
-├── memory.py
-├── utils.py
-└── requirements.txt
-```
+- Local LLM via Ollama
+- Default model: `qwen3:4b`
+- No OpenAI API required
+- Korean-first responses
+- JSON intent analysis
+- DuckDuckGo web search
+- SQLite schedule storage
+- Reply drafting
+- Long text summarization
+- macOS app launcher
+- CLI interface
+- Web UI at `http://127.0.0.1:8000`
 
-## 기능
-
-- Ollama API로 `qwen3:4b` 호출
-- 사용자 입력을 JSON intent로 분석
-- 웹 검색: DuckDuckGo HTML 검색
-- 일정 관리: SQLite 저장/조회
-- 답장 생성
-- 긴 텍스트 요약
-- Mac 앱 실행
-
-Intent 형식:
+Intent schema:
 
 ```json
 {
@@ -33,15 +26,31 @@ Intent 형식:
 }
 ```
 
-## 설치
+## Project Structure
 
-Ollama가 설치되어 있고 서버가 실행 중이어야 합니다.
-
-```bash
-ollama pull qwen3:4b
+```text
+jarvis_assistant/
+├── main.py
+├── brain.py
+├── actions.py
+├── memory.py
+├── utils.py
+├── web_app.py
+├── static/
+│   ├── index.html
+│   ├── styles.css
+│   └── app.js
+└── requirements.txt
 ```
 
-프로젝트 의존성 설치:
+## Requirements
+
+- macOS
+- Python 3.9+
+- Ollama
+- `qwen3:4b` or another local Ollama model
+
+Install Python dependencies:
 
 ```bash
 cd ~/jarvis_assistant
@@ -51,17 +60,23 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-## 실행
+Install the Ollama model:
 
-터미널 1:
+```bash
+ollama pull qwen3:4b
+```
+
+## Run CLI
+
+Terminal 1:
 
 ```bash
 ollama serve
 ```
 
-이미 `address already in use`가 나오면 Ollama가 이미 실행 중인 것이므로 다음 단계로 넘어가면 됩니다.
+If you see `address already in use`, Ollama is already running.
 
-터미널 2:
+Terminal 2:
 
 ```bash
 cd ~/jarvis_assistant
@@ -69,7 +84,23 @@ source .venv/bin/activate
 python main.py
 ```
 
-## 사용 예시
+## Run Web UI
+
+```bash
+cd ~/jarvis_assistant
+source .venv/bin/activate
+uvicorn web_app:app --host 127.0.0.1 --port 8000
+```
+
+Open:
+
+```text
+http://127.0.0.1:8000/
+```
+
+The UI can render without Ollama, but command execution requires the Ollama server and model.
+
+## Examples
 
 ```text
 오늘 애플 관련 최신 뉴스 검색해줘
@@ -83,9 +114,13 @@ python main.py
 크롬 실행해
 ```
 
-## 참고
+## Notes
 
-- 웹 검색은 DuckDuckGo HTML 페이지를 `requests`와 `BeautifulSoup`으로 읽습니다.
-- 일정은 `jarvis.db` SQLite 파일에 저장됩니다.
-- 앱 실행은 Mac의 `open -a 앱이름`을 사용합니다.
-- OpenAI API 키는 필요하지 않습니다.
+- Web search uses DuckDuckGo HTML results through `requests` and `BeautifulSoup`.
+- Schedules are stored in `jarvis.db`.
+- App launching uses macOS `open -a`.
+- Generated local files such as `.env`, `.venv`, `jarvis.db`, and Ollama models are not committed.
+
+## License
+
+MIT
