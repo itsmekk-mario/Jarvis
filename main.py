@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from dotenv import load_dotenv
 
 from brain import JarvisBrain
@@ -9,7 +11,7 @@ EXIT_WORDS = {"종료", "그만", "꺼져", "멈춰", "끝내"}
 
 
 def main() -> None:
-    load_dotenv()
+    load_dotenv(Path(__file__).resolve().parent / ".env")
 
     voice = VoiceInput(wake_word="자비스")
     brain = JarvisBrain()

@@ -12,7 +12,7 @@ from brain import JarvisBrain
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
 
-load_dotenv()
+load_dotenv(BASE_DIR / ".env")
 
 app = FastAPI(title="Jarvis Web UI")
 brain = JarvisBrain()
