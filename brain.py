@@ -4,7 +4,7 @@ import json
 import os
 from typing import Any
 
-from openai import OpenAI
+from openai import AuthenticationError, OpenAI, OpenAIError, RateLimitError
 
 from browser_actions import open_instagram, open_url, open_youtube_search
 from google_services import (
@@ -229,12 +229,19 @@ class JarvisBrain:
         self.messages.append({"role": "user", "content": user_text})
 
         client = self._client()
-        first = client.chat.completions.create(
-            model=self.model,
-            messages=self.messages,
-            tools=TOOLS,
-            tool_choice="auto",
-        )
+        try:
+            first = client.chat.completions.create(
+                model=self.model,
+                messages=self.messages,
+                tools=TOOLS,
+                tool_choice="auto",
+            )
+        except RateLimitError as exc:
+            return _friendly_openai_error(exc, "rate_limit")
+        except AuthenticationError as exc:
+            return _friendly_openai_error(exc, "auth")
+        except OpenAIError as exc:
+            return _friendly_openai_error(exc, "openai")
 
         assistant_message = first.choices[0].message
         self.messages.append(assistant_message.model_dump(exclude_none=True))
@@ -259,12 +266,34 @@ class JarvisBrain:
                     }
                 )
 
-            second = client.chat.completions.create(
-                model=self.model,
-                messages=self.messages,
-            )
+            try:
+                second = client.chat.completions.create(
+                    model=self.model,
+                    messages=self.messages,
+                )
+            except RateLimitError as exc:
+                return _friendly_openai_error(exc, "rate_limit")
+            except AuthenticationError as exc:
+                return _friendly_openai_error(exc, "auth")
+            except OpenAIError as exc:
+                return _friendly_openai_error(exc, "openai")
             answer = second.choices[0].message.content or "답변을 생성하지 못했습니다."
             self.messages.append({"role": "assistant", "content": answer})
             return answer
 
         return assistant_message.content or "답변을 생성하지 못했습니다."
+
+
+def _friendly_openai_error(exc: OpenAIError, kind: str) -> str:
+    if kind == "rate_limit":
+        return (
+            "OpenAI API 429 오류가 발생했습니다. 보통 결제 수단이 없거나, 크레딧이 부족하거나, "
+            "요청 한도를 초과했을 때 발생합니다. OpenAI 대시보드에서 Billing과 Usage를 확인한 뒤 "
+            "잠시 후 다시 시도해 주세요."
+        )
+    if kind == "auth":
+        return (
+            "OpenAI API 키 인증 오류가 발생했습니다. .env의 OPENAI_API_KEY가 올바른 새 키인지 "
+            "확인해 주세요."
+        )
+    return f"OpenAI API 오류가 발생했습니다: {exc}"
