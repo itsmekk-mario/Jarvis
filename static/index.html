@@ -7,20 +7,47 @@
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
+    <div class="blueprint-layer" aria-hidden="true"></div>
     <main class="shell">
       <section class="stage" aria-label="Jarvis voice interface">
-        <div class="hud">
+        <div class="top-bar">
           <div class="status-row">
             <span class="status-dot" id="statusDot"></span>
             <span id="statusText">대기 중</span>
           </div>
-          <h1>JARVIS</h1>
+          <div class="system-tag">MK-IV LOCAL ASSISTANT</div>
         </div>
 
-        <button class="core-button" id="talkButton" type="button" aria-label="Jarvis 음성 명령 시작">
-          <canvas id="coreCanvas" class="core-canvas" aria-hidden="true"></canvas>
-          <span class="core-glow"></span>
-        </button>
+        <div class="interface-grid">
+          <aside class="telemetry telemetry-left" aria-hidden="true">
+            <span>CORE</span>
+            <strong>ONLINE</strong>
+            <i></i>
+            <span>LINK</span>
+            <strong>OLLAMA</strong>
+            <i></i>
+            <span>MODE</span>
+            <strong>VOICE</strong>
+          </aside>
+
+          <button class="core-button" id="talkButton" type="button" aria-label="Jarvis 음성 명령 시작">
+            <canvas id="coreCanvas" class="core-canvas" aria-hidden="true"></canvas>
+            <span class="core-glow"></span>
+            <span class="core-label">J.A.R.V.I.S.</span>
+            <span class="scan-line"></span>
+          </button>
+
+          <aside class="telemetry telemetry-right" aria-hidden="true">
+            <span>INPUT</span>
+            <strong>KOR</strong>
+            <i></i>
+            <span>STATUS</span>
+            <strong>READY</strong>
+            <i></i>
+            <span>SYNC</span>
+            <strong>LOCAL</strong>
+          </aside>
+        </div>
 
         <div class="transcript">
           <div class="line user-line">
@@ -38,7 +65,7 @@
             id="commandInput"
             type="text"
             autocomplete="off"
-            placeholder="음성 대신 명령을 입력할 수도 있습니다"
+            placeholder="명령 입력"
           />
           <button type="submit">전송</button>
         </form>

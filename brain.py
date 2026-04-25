@@ -75,7 +75,7 @@ class JarvisBrain:
         base_url: str | None = None,
         timeout: int | None = None,
     ) -> None:
-        self.model = model or os.getenv("OLLAMA_MODEL", "qwen3:4b")
+        self.model = model or os.getenv("OLLAMA_MODEL", "gemma3:12b")
         self.base_url = (base_url or os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")).rstrip("/")
         self.timeout = timeout or env_int("OLLAMA_TIMEOUT", 240)
 

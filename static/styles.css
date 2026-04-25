@@ -1,18 +1,26 @@
 :root {
   color-scheme: dark;
-  --bg: #05080d;
-  --panel: rgba(8, 15, 22, 0.78);
-  --line: rgba(139, 213, 235, 0.2);
-  --text: #eefcff;
-  --muted: #8aa4ad;
-  --cyan: #7ee7ff;
-  --aqua: #7df5d2;
-  --red: #ff6680;
-  --green: #65ffc2;
+  --bg: #02090b;
+  --panel: rgba(4, 21, 25, 0.74);
+  --panel-soft: rgba(8, 45, 55, 0.34);
+  --line: rgba(112, 242, 255, 0.22);
+  --line-strong: rgba(139, 250, 255, 0.7);
+  --text: #efffff;
+  --muted: #83aab0;
+  --cyan: #7ff6ff;
+  --blue: #49bdf2;
+  --amber: #ffcf42;
+  --red: #ff657a;
+  --green: #62ffc3;
 }
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--bg);
 }
 
 body {
@@ -20,67 +28,124 @@ body {
   margin: 0;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 36%, rgba(126, 231, 255, 0.12), transparent 30%),
-    linear-gradient(145deg, #030509 0%, #08111a 48%, #04070c 100%);
+    radial-gradient(circle at 50% 42%, rgba(77, 218, 255, 0.16), transparent 34%),
+    radial-gradient(circle at 52% 46%, rgba(255, 207, 66, 0.05), transparent 20%),
+    linear-gradient(180deg, #031114 0%, #05161a 48%, #020609 100%);
   color: var(--text);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
 }
 
-body::before {
+body::before,
+body::after,
+.blueprint-layer {
   position: fixed;
   inset: 0;
   content: "";
   pointer-events: none;
+}
+
+body::before {
   background:
-    radial-gradient(circle at center, transparent 0 36%, rgba(126, 231, 255, 0.055) 37%, transparent 38%),
-    repeating-linear-gradient(0deg, rgba(238, 252, 255, 0.014) 0 1px, transparent 1px 8px);
-  opacity: 0.65;
+    linear-gradient(rgba(127, 246, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(127, 246, 255, 0.03) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(circle at center, black 0 64%, transparent 86%);
+}
+
+body::after {
+  background:
+    repeating-linear-gradient(0deg, rgba(239, 255, 255, 0.024) 0 1px, transparent 1px 7px),
+    radial-gradient(circle at center, transparent 0 48%, rgba(1, 11, 14, 0.56) 78%);
+  opacity: 0.72;
+}
+
+.blueprint-layer {
+  background:
+    linear-gradient(90deg, transparent 4%, rgba(127, 246, 255, 0.12) 4.1%, transparent 4.2%),
+    linear-gradient(90deg, transparent 88%, rgba(127, 246, 255, 0.12) 88.1%, transparent 88.2%),
+    linear-gradient(0deg, transparent 17%, rgba(127, 246, 255, 0.09) 17.1%, transparent 17.2%),
+    linear-gradient(0deg, transparent 76%, rgba(127, 246, 255, 0.09) 76.1%, transparent 76.2%);
+  opacity: 0.72;
 }
 
 .shell {
+  position: relative;
+  z-index: 1;
   display: grid;
   min-height: 100vh;
   place-items: center;
-  padding: 16px;
+  padding: 14px;
 }
 
 .stage {
   position: relative;
   display: grid;
-  width: min(860px, 100%);
-  min-height: min(620px, calc(100vh - 32px));
+  width: min(1120px, 100%);
+  min-height: min(720px, calc(100vh - 28px));
   grid-template-rows: auto 1fr auto auto;
+  gap: 12px;
   align-items: center;
-  justify-items: center;
-  padding: clamp(18px, 3vw, 34px);
-  border: 1px solid rgba(139, 213, 235, 0.16);
+  padding: clamp(16px, 2.4vw, 28px);
+  border: 1px solid rgba(127, 246, 255, 0.2);
   border-radius: 8px;
   background:
-    linear-gradient(180deg, rgba(8, 16, 24, 0.82), rgba(4, 8, 14, 0.9)),
-    radial-gradient(circle at center, rgba(126, 231, 255, 0.045), transparent 54%);
+    linear-gradient(180deg, rgba(4, 18, 22, 0.78), rgba(1, 8, 11, 0.88)),
+    radial-gradient(circle at center, rgba(80, 198, 255, 0.08), transparent 62%);
   box-shadow:
-    0 24px 80px rgba(0, 0, 0, 0.36),
-    inset 0 0 70px rgba(126, 231, 255, 0.035);
+    0 26px 90px rgba(0, 0, 0, 0.42),
+    inset 0 0 90px rgba(127, 246, 255, 0.05);
   overflow: hidden;
 }
 
-.hud {
+.stage::before {
+  position: absolute;
+  inset: 14px;
+  content: "";
+  border: 1px solid rgba(127, 246, 255, 0.12);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.stage::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    linear-gradient(90deg, transparent 0 34%, rgba(127, 246, 255, 0.08) 34.2%, transparent 34.4%),
+    linear-gradient(90deg, transparent 65%, rgba(127, 246, 255, 0.08) 65.2%, transparent 65.4%),
+    linear-gradient(0deg, transparent 43%, rgba(127, 246, 255, 0.06) 43.2%, transparent 43.4%);
+  opacity: 0.82;
+  pointer-events: none;
+}
+
+.top-bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
   width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0;
 }
 
 .status-row {
   display: flex;
+  min-height: 32px;
   align-items: center;
   gap: 10px;
-  color: var(--muted);
-  font-size: 14px;
+  padding: 0 12px;
+  border: 1px solid rgba(127, 246, 255, 0.16);
+  background: rgba(2, 11, 14, 0.56);
 }
 
 .status-dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 999px;
   background: var(--green);
   box-shadow: 0 0 18px var(--green);
@@ -91,116 +156,221 @@ body::before {
   box-shadow: 0 0 18px var(--red);
 }
 
-h1 {
-  margin: 8px 0 0;
-  font-size: clamp(28px, 5vw, 56px);
+.system-tag {
+  min-height: 32px;
+  padding: 9px 12px 0;
+  border: 1px solid rgba(127, 246, 255, 0.16);
+  color: rgba(239, 255, 255, 0.76);
+  background: rgba(2, 11, 14, 0.44);
+}
+
+.interface-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: min(940px, 100%);
+  grid-template-columns: minmax(120px, 1fr) minmax(330px, 520px) minmax(120px, 1fr);
+  gap: clamp(12px, 2.5vw, 28px);
+  align-items: center;
+  justify-self: center;
+}
+
+.telemetry {
+  display: grid;
+  gap: 8px;
+  align-content: center;
+  min-height: 300px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.telemetry span {
+  color: rgba(127, 246, 255, 0.65);
+}
+
+.telemetry strong {
+  display: block;
+  min-height: 28px;
+  padding: 6px 8px;
+  border: 1px solid rgba(127, 246, 255, 0.14);
+  color: rgba(239, 255, 255, 0.82);
+  font-size: 12px;
   font-weight: 650;
-  letter-spacing: 0;
-  color: rgba(238, 252, 255, 0.9);
-  text-shadow:
-    0 0 18px rgba(126, 231, 255, 0.3),
-    0 0 34px rgba(126, 231, 255, 0.12);
+  background: rgba(6, 28, 34, 0.42);
+}
+
+.telemetry i {
+  display: block;
+  height: 36px;
+  border: 1px solid rgba(127, 246, 255, 0.1);
+  background:
+    linear-gradient(90deg, rgba(127, 246, 255, 0.18) 0 42%, transparent 42%),
+    repeating-linear-gradient(90deg, rgba(127, 246, 255, 0.18) 0 2px, transparent 2px 9px);
+}
+
+.telemetry-left {
+  text-align: left;
+}
+
+.telemetry-right {
+  text-align: right;
 }
 
 .core-button {
   position: relative;
   display: grid;
-  width: min(56vw, 360px);
+  width: min(58vw, 520px);
   aspect-ratio: 1;
-  margin: 10px 0 16px;
   place-items: center;
   border: 0;
   border-radius: 50%;
-  background: transparent;
+  background:
+    radial-gradient(circle at center, rgba(0, 0, 0, 0.74) 0 29%, transparent 30%),
+    conic-gradient(from -12deg, rgba(127, 246, 255, 0.95), rgba(73, 189, 242, 0.2), rgba(127, 246, 255, 0.88));
   cursor: pointer;
   transition: transform 240ms ease, filter 240ms ease;
 }
 
+.core-button::before,
+.core-button::after {
+  position: absolute;
+  content: "";
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.core-button::before {
+  inset: 3.5%;
+  border: 2px solid rgba(127, 246, 255, 0.8);
+  box-shadow:
+    0 0 24px rgba(127, 246, 255, 0.34),
+    inset 0 0 28px rgba(127, 246, 255, 0.18);
+}
+
+.core-button::after {
+  inset: 20%;
+  border: 2px solid rgba(127, 246, 255, 0.76);
+  background:
+    radial-gradient(circle at center, rgba(0, 9, 12, 0.92) 0 52%, transparent 53%),
+    conic-gradient(from 160deg, transparent 0 14%, rgba(255, 207, 66, 0.8) 14% 20%, transparent 20% 100%);
+  box-shadow:
+    0 0 26px rgba(127, 246, 255, 0.42),
+    inset 0 0 30px rgba(127, 246, 255, 0.12);
+}
+
 .core-button:focus-visible {
-  outline: 2px solid rgba(110, 234, 255, 0.7);
+  outline: 2px solid rgba(127, 246, 255, 0.8);
   outline-offset: 12px;
 }
 
+.core-button:hover {
+  filter: brightness(1.12);
+}
+
 .core-button.listening {
-  transform: scale(1.03);
+  transform: scale(1.018);
 }
 
 .core-button.speaking {
-  transform: scale(1.06);
-}
-
-.core-button:hover {
-  filter: brightness(1.1);
+  transform: scale(1.035);
 }
 
 .core-canvas {
   position: absolute;
   inset: 0;
+  z-index: 2;
   width: 100%;
   height: 100%;
 }
 
 .core-glow {
   position: absolute;
-  width: 34%;
+  z-index: 1;
+  width: 44%;
   aspect-ratio: 1;
   border-radius: 50%;
   background:
-    radial-gradient(circle, rgba(238, 252, 255, 0.86), rgba(126, 231, 255, 0.22) 35%, transparent 66%);
-  filter: blur(6px);
-  opacity: 0.74;
+    radial-gradient(circle, rgba(239, 255, 255, 0.8), rgba(127, 246, 255, 0.18) 45%, transparent 70%);
+  filter: blur(10px);
+  opacity: 0.55;
   animation: breathe 4.8s ease-in-out infinite;
-  pointer-events: none;
 }
 
-.core-button.listening .core-glow,
-.core-button.speaking .core-glow {
-  opacity: 0.94;
-  filter: blur(8px);
+.core-label {
+  position: relative;
+  z-index: 4;
+  color: rgba(239, 255, 255, 0.96);
+  font-size: clamp(24px, 4.8vw, 50px);
+  font-weight: 800;
+  letter-spacing: 0;
+  text-shadow:
+    0 0 12px rgba(127, 246, 255, 0.72),
+    0 0 28px rgba(127, 246, 255, 0.38);
+}
+
+.scan-line {
+  position: absolute;
+  z-index: 3;
+  width: 58%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(127, 246, 255, 0.9), transparent);
+  box-shadow: 0 0 16px rgba(127, 246, 255, 0.72);
+  animation: scan 3.4s ease-in-out infinite;
 }
 
 .transcript {
+  position: relative;
+  z-index: 1;
   display: grid;
-  width: min(680px, 100%);
+  width: min(760px, 100%);
   gap: 8px;
+  justify-self: center;
 }
 
 .line {
-  border-left: 1px solid var(--line);
-  padding: 8px 12px;
-  border-radius: 0 8px 8px 0;
-  background: rgba(3, 9, 15, 0.34);
-  box-shadow: inset 0 0 24px rgba(126, 231, 255, 0.025);
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: 10px;
+  align-items: start;
+  min-height: 48px;
+  border: 1px solid rgba(127, 246, 255, 0.16);
+  border-left: 3px solid rgba(127, 246, 255, 0.65);
+  padding: 9px 12px;
+  background: rgba(2, 12, 15, 0.66);
+  box-shadow: inset 0 0 26px rgba(127, 246, 255, 0.035);
 }
 
 .line span {
-  display: block;
   color: var(--cyan);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .line p {
   min-height: 20px;
-  margin: 4px 0 0;
-  color: rgba(238, 252, 255, 0.9);
-  line-height: 1.4;
+  max-height: 70px;
+  margin: 0;
+  overflow: auto;
+  color: rgba(239, 255, 255, 0.9);
+  line-height: 1.45;
 }
 
 .command-form {
+  position: relative;
+  z-index: 1;
   display: grid;
-  width: min(680px, 100%);
+  width: min(760px, 100%);
   grid-template-columns: 1fr auto;
   gap: 10px;
-  margin-top: 12px;
+  justify-self: center;
 }
 
 .command-form input,
 .command-form button {
-  min-height: 40px;
-  border: 1px solid rgba(139, 213, 235, 0.22);
-  border-radius: 8px;
-  background: rgba(2, 8, 14, 0.68);
+  min-height: 42px;
+  border: 1px solid rgba(127, 246, 255, 0.24);
+  border-radius: 0;
+  background: rgba(2, 12, 15, 0.72);
   color: var(--text);
   font: inherit;
 }
@@ -210,42 +380,84 @@ h1 {
   padding: 0 14px;
 }
 
+.command-form input::placeholder {
+  color: rgba(131, 170, 176, 0.72);
+}
+
 .command-form button {
-  padding: 0 22px;
+  padding: 0 24px;
   cursor: pointer;
-  background: rgba(126, 231, 255, 0.1);
+  background: rgba(127, 246, 255, 0.13);
+  font-weight: 700;
 }
 
 .command-form button:hover {
-  border-color: rgba(126, 231, 255, 0.56);
+  border-color: rgba(127, 246, 255, 0.7);
 }
 
 @keyframes breathe {
   0%,
   100% {
-    transform: scale(0.9);
+    transform: scale(0.94);
   }
   50% {
-    transform: scale(1.12);
+    transform: scale(1.08);
   }
 }
 
-@media (max-width: 720px) {
+@keyframes scan {
+  0%,
+  100% {
+    transform: translateY(-92px);
+    opacity: 0;
+  }
+  18%,
+  82% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(92px);
+  }
+}
+
+@media (max-width: 860px) {
   body {
     overflow: auto;
   }
 
   .shell {
-    padding: 10px;
+    padding: 8px;
   }
 
   .stage {
-    min-height: calc(100vh - 20px);
-    padding: 16px;
+    min-height: calc(100vh - 16px);
+  }
+
+  .interface-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    justify-items: center;
+  }
+
+  .telemetry {
+    display: none;
   }
 
   .core-button {
-    width: min(74vw, 300px);
+    width: min(86vw, 430px);
+  }
+
+  .top-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .system-tag {
+    display: none;
+  }
+
+  .line {
+    grid-template-columns: 64px 1fr;
   }
 
   .command-form {

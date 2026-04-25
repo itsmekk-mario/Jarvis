@@ -6,7 +6,7 @@ CLI와 Web UI를 모두 제공합니다. Web UI는 중앙 코어 애니메이션
 
 ## 주요 기능
 
-- **로컬 LLM 연동**: Ollama API를 사용하며 기본 모델은 `qwen3:4b`입니다.
+- **로컬 LLM 연동**: Ollama API를 사용하며 기본 모델은 `gemma3:12b`입니다.
 - **의도 분석**: 사용자 입력을 `search`, `weather`, `file_search`, `schedule` 등으로 분류합니다.
 - **웹 검색**: DuckDuckGo HTML 검색 결과를 가져와 핵심 내용을 요약합니다.
 - **URL 읽기**: 사용자가 입력한 URL의 본문을 가져와 한국어로 요약합니다.
@@ -88,7 +88,7 @@ https://ollama.com/
 4. 사용할 Ollama 모델을 내려받습니다.
 
    ```bash
-   ollama pull qwen3:4b
+   ollama pull gemma3:12b
    ```
 
 ## 환경 변수 설정
@@ -108,7 +108,7 @@ New-Item -ItemType File .env
 예시:
 
 ```env
-OLLAMA_MODEL=qwen3:4b
+OLLAMA_MODEL=gemma3:12b
 OLLAMA_BASE_URL=http://127.0.0.1:11434
 OLLAMA_TIMEOUT=240
 OLLAMA_NUM_CTX=2048
@@ -130,7 +130,7 @@ JARVIS_FILE_SEARCH_ROOTS=C:\Users\your-name\Documents,C:\Users\your-name\Desktop
 
 | 변수 | 기본값 | 설명 |
 | --- | --- | --- |
-| `OLLAMA_MODEL` | `qwen3:4b` | 사용할 Ollama 모델 이름 |
+| `OLLAMA_MODEL` | `gemma3:12b` | 사용할 Ollama 모델 이름 |
 | `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | Ollama API 주소 |
 | `OLLAMA_TIMEOUT` | `240` | Ollama 요청 타임아웃 초 |
 | `OLLAMA_NUM_CTX` | `2048` | 모델 컨텍스트 크기 |
@@ -319,7 +319,7 @@ ollama serve
 ### 모델을 찾을 수 없는 경우
 
 ```bash
-ollama pull qwen3:4b
+ollama pull gemma3:12b
 ```
 
 또는 `.env`에 설정한 모델명을 확인합니다.
@@ -330,13 +330,13 @@ ollama pull qwen3:4b
 
 ```powershell
 ollama list
-ollama run qwen3:4b "안녕"
+ollama run gemma3:12b "안녕"
 ```
 
 모델이 없으면 다시 내려받습니다.
 
 ```powershell
-ollama pull qwen3:4b
+ollama pull gemma3:12b
 ```
 
 Jarvis가 사용하는 API를 직접 확인하려면 PowerShell에서 실행합니다.
@@ -346,7 +346,7 @@ Invoke-RestMethod `
   -Uri http://127.0.0.1:11434/api/chat `
   -Method Post `
   -ContentType "application/json" `
-  -Body '{"model":"qwen3:4b","messages":[{"role":"user","content":"안녕"}],"stream":false}'
+  -Body '{"model":"gemma3:12b","messages":[{"role":"user","content":"안녕"}],"stream":false}'
 ```
 
 여기서도 500이 나면 Jarvis 문제가 아니라 Ollama 또는 모델 실행 문제입니다. Ollama를 재시작하거나 모델을 다시 pull하고, 그래도 안 되면 Ollama를 최신 버전으로 업데이트하세요.
