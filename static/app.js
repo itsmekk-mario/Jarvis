@@ -31,6 +31,20 @@ function setSpeaking(active) {
   core.classList.toggle("speaking", active);
 }
 
+function getWakeGreeting() {
+  const hour = new Date().getHours();
+
+  if (hour < 5) return "늦은 시간입니다. 무엇을 도와드릴까요?";
+  if (hour < 12) return "좋은 아침입니다. 무엇을 도와드릴까요?";
+  if (hour < 18) return "좋은 오후입니다. 무엇을 도와드릴까요?";
+  return "좋은 저녁입니다. 무엇을 도와드릴까요?";
+}
+
+function beginCommandPrompt() {
+  awaitingCommand = true;
+  speak(getWakeGreeting(), () => setStatus("명령을 말씀하세요", true));
+}
+
 async function askJarvis(text) {
   const command = text.trim();
   if (!command) return;
@@ -64,9 +78,10 @@ async function askJarvis(text) {
   }
 }
 
-function speak(text) {
+function speak(text, onDone) {
   if (!window.speechSynthesis) {
     setStatus("음성 합성을 지원하지 않는 브라우저입니다");
+    if (onDone) onDone();
     return;
   }
 
@@ -82,7 +97,11 @@ function speak(text) {
   };
   utterance.onend = () => {
     setSpeaking(false);
-    setStatus("대기 중");
+    if (onDone) {
+      onDone();
+    } else {
+      setStatus("대기 중");
+    }
   };
   utterance.onerror = () => {
     setSpeaking(false);
@@ -120,9 +139,7 @@ function setupRecognition() {
     }
 
     if (compact.includes("자비스")) {
-      awaitingCommand = true;
-      speak("네, 듣고 있습니다.");
-      setStatus("명령을 말씀하세요", true);
+      beginCommandPrompt();
     }
   };
 
@@ -142,9 +159,7 @@ function setupRecognition() {
 }
 
 core.addEventListener("click", () => {
-  awaitingCommand = true;
-  speak("네, 듣고 있습니다.");
-  setStatus("명령을 말씀하세요", true);
+  beginCommandPrompt();
 });
 
 form.addEventListener("submit", (event) => {
