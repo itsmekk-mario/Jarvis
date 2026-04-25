@@ -90,7 +90,7 @@ class JarvisBrain:
 - schedule: 일정 추가, 일정 조회, 할 일 관리
 - reply: 메시지/카톡/메일 답장 문장 작성
 - summarize: 긴 글, 문서, 검색 결과 요약
-- open_app: Mac 앱 실행
+- open_app: 데스크톱 앱 실행
 - unknown: 위에 해당하지 않음
 
 반드시 이 형식만 출력:

@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+import sys
 import urllib.parse
 from dataclasses import dataclass
 from pathlib import Path
@@ -150,12 +151,16 @@ class JarvisActions:
     def open_app(self, text: str) -> ActionResult:
         app_name = extract_app_name(text)
         if not app_name:
-            return ActionResult("앱 실행", "실행할 앱 이름을 찾지 못했습니다. 예: 사파리 열어줘")
+            return ActionResult("앱 실행", "실행할 앱 이름을 찾지 못했습니다. 예: 크롬 열어줘")
 
         try:
-            subprocess.run(["open", "-a", app_name], check=True)
-        except subprocess.CalledProcessError:
-            return ActionResult("앱 실행 오류", f"'{app_name}' 앱을 실행하지 못했습니다. 앱 이름을 확인해 주세요.")
+            open_application(app_name)
+        except (OSError, subprocess.CalledProcessError):
+            platform_name = platform_label()
+            return ActionResult(
+                "앱 실행 오류",
+                f"'{app_name}' 앱을 실행하지 못했습니다. {platform_name}에 설치된 앱 이름을 확인해 주세요.",
+            )
         return ActionResult("앱 실행", f"'{app_name}' 앱을 실행했습니다.")
 
     def unknown(self, text: str) -> ActionResult:
@@ -346,9 +351,19 @@ def should_scan_dir(name: str) -> bool:
         ".venv",
         "__pycache__",
         "node_modules",
+        "$Recycle.Bin",
+        "AppData",
+        "Application Data",
+        "Intel",
         "Library",
+        "Microsoft",
+        "OneDriveTemp",
+        "Program Files",
+        "Program Files (x86)",
+        "ProgramData",
         "Applications",
         "System",
+        "Windows",
         "Pictures",
         "Movies",
         "Music",
@@ -404,19 +419,7 @@ def parse_schedule_text(text: str) -> tuple[str, str]:
 
 
 def extract_app_name(text: str) -> str:
-    aliases = {
-        "사파리": "Safari",
-        "크롬": "Google Chrome",
-        "구글 크롬": "Google Chrome",
-        "메모": "Notes",
-        "노트": "Notes",
-        "캘린더": "Calendar",
-        "터미널": "Terminal",
-        "카카오톡": "KakaoTalk",
-        "카톡": "KakaoTalk",
-        "메일": "Mail",
-        "음악": "Music",
-    }
+    aliases = app_aliases()
     for korean, app in aliases.items():
         if korean in text:
             return app
@@ -425,3 +428,125 @@ def extract_app_name(text: str) -> str:
     for token in ["열어줘", "실행해", "켜줘", "앱", "open", "실행", "열어"]:
         cleaned = cleaned.replace(token, " ")
     return compact_whitespace(cleaned)
+
+
+def app_aliases() -> dict[str, str]:
+    common = {
+        "크롬": "Google Chrome",
+        "구글 크롬": "Google Chrome",
+        "엣지": "Microsoft Edge",
+        "파이어폭스": "Firefox",
+        "카카오톡": "KakaoTalk",
+        "카톡": "KakaoTalk",
+        "디스코드": "Discord",
+        "슬랙": "Slack",
+        "스포티파이": "Spotify",
+        "계산기": "Calculator",
+    }
+    if sys.platform == "darwin":
+        return {
+            **common,
+            "사파리": "Safari",
+            "메모": "Notes",
+            "노트": "Notes",
+            "캘린더": "Calendar",
+            "터미널": "Terminal",
+            "메일": "Mail",
+            "음악": "Music",
+            "탐색기": "Finder",
+            "파인더": "Finder",
+        }
+    if sys.platform.startswith("win"):
+        return {
+            **common,
+            "메모장": "notepad",
+            "메모": "notepad",
+            "노트": "notepad",
+            "캘린더": "outlookcal:",
+            "터미널": "wt",
+            "명령 프롬프트": "cmd",
+            "파워쉘": "powershell",
+            "메일": "outlookmail:",
+            "파일 탐색기": "explorer",
+            "탐색기": "explorer",
+            "그림판": "mspaint",
+            "설정": "ms-settings:",
+        }
+    return {
+        **common,
+        "터미널": "gnome-terminal",
+        "파일": "xdg-open",
+        "파일 관리자": "xdg-open",
+    }
+
+
+def open_application(app_name: str) -> None:
+    if sys.platform == "darwin":
+        subprocess.run(["open", "-a", app_name], check=True)
+        return
+
+    if sys.platform.startswith("win"):
+        open_windows_application(app_name)
+        return
+
+    subprocess.run([linux_app_command(app_name)], check=True)
+
+
+def open_windows_application(app_name: str) -> None:
+    command = windows_app_command(app_name)
+    path = Path(command).expanduser()
+    if path.exists():
+        os.startfile(path)  # type: ignore[attr-defined]
+        return
+
+    if command.endswith(":"):
+        os.startfile(command)  # type: ignore[attr-defined]
+        return
+
+    subprocess.run(["cmd", "/c", "start", "", command], check=True)
+
+
+def windows_app_command(app_name: str) -> str:
+    normalized = app_name.strip().lower()
+    commands = {
+        "google chrome": "chrome",
+        "chrome": "chrome",
+        "microsoft edge": "msedge",
+        "edge": "msedge",
+        "firefox": "firefox",
+        "calculator": "calc",
+        "notepad": "notepad",
+        "explorer": "explorer",
+        "cmd": "cmd",
+        "powershell": "powershell",
+        "wt": "wt",
+        "mspaint": "mspaint",
+        "discord": "Discord",
+        "slack": "Slack",
+        "spotify": "Spotify",
+        "kakaotalk": "KakaoTalk",
+    }
+    return commands.get(normalized, app_name)
+
+
+def linux_app_command(app_name: str) -> str:
+    normalized = app_name.strip().lower()
+    commands = {
+        "google chrome": "google-chrome",
+        "chrome": "google-chrome",
+        "microsoft edge": "microsoft-edge",
+        "firefox": "firefox",
+        "calculator": "gnome-calculator",
+        "discord": "discord",
+        "slack": "slack",
+        "spotify": "spotify",
+    }
+    return commands.get(normalized, app_name)
+
+
+def platform_label() -> str:
+    if sys.platform == "darwin":
+        return "macOS"
+    if sys.platform.startswith("win"):
+        return "Windows"
+    return "현재 OS"
