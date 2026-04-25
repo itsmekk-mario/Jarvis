@@ -5,6 +5,7 @@ import re
 import subprocess
 import urllib.parse
 from dataclasses import dataclass
+from pathlib import Path
 
 import requests
 from bs4 import BeautifulSoup
@@ -26,6 +27,14 @@ class JarvisActions:
         self.memory = memory or ScheduleMemory()
 
     def run(self, intent: str, content: str) -> ActionResult:
+        if intent == "quick_reply":
+            return self.quick_reply(content)
+        if intent == "weather":
+            return self.weather(content)
+        if intent == "file_search":
+            return self.search_files(content)
+        if intent == "browse_url":
+            return self.browse_url(content)
         if intent == "search":
             return self.search_web(content)
         if intent == "schedule":
@@ -37,6 +46,57 @@ class JarvisActions:
         if intent == "open_app":
             return self.open_app(content)
         return self.unknown(content)
+
+    def quick_reply(self, text: str) -> ActionResult:
+        compact = text.replace(" ", "")
+        if compact in {"고마워", "감사", "땡큐"} or text.lower().strip() in {"thanks", "thank you"}:
+            return ActionResult("일반 응답", "언제든지요.")
+        return ActionResult("일반 응답", "네, 듣고 있습니다. 무엇을 도와드릴까요?")
+
+    def weather(self, text: str) -> ActionResult:
+        location = extract_weather_location(text) or os.getenv("JARVIS_DEFAULT_LOCATION", "Seoul")
+        try:
+            weather = fetch_weather(location)
+        except Exception as exc:
+            return ActionResult("날씨 오류", f"날씨 정보를 가져오지 못했습니다: {exc}")
+
+        return ActionResult("날씨", weather)
+
+    def browse_url(self, text: str) -> ActionResult:
+        url = extract_url(text)
+        if not url:
+            return ActionResult("웹페이지 읽기", "읽을 URL을 찾지 못했습니다.")
+
+        try:
+            title, page_text = fetch_page_text(url)
+        except Exception as exc:
+            return ActionResult("웹페이지 읽기 오류", f"페이지를 가져오지 못했습니다: {exc}")
+
+        if not page_text:
+            return ActionResult("웹페이지 읽기", "페이지에서 읽을 수 있는 텍스트를 찾지 못했습니다.")
+
+        summary = self.brain.generate(
+            f"URL: {url}\n제목: {title}\n\n본문:\n{page_text[:6000]}\n\n"
+            "위 웹페이지의 핵심을 한국어로 짧게 요약해줘.",
+            system="너는 웹페이지 내용을 읽고 핵심만 요약하는 비서다.",
+        )
+        return ActionResult("웹페이지 요약", summary)
+
+    def search_files(self, text: str) -> ActionResult:
+        query = extract_file_query(text)
+        if not query:
+            return ActionResult("파일 검색", "찾을 파일명이나 키워드를 알려주세요.")
+
+        results = find_local_files(query)
+        if not results:
+            return ActionResult("파일 검색", f"'{query}'와 일치하는 파일을 찾지 못했습니다.")
+
+        lines = [f"검색어: {query}", "찾은 항목:"]
+        for index, item in enumerate(results, start=1):
+            location = item["path"]
+            reason = item["match"]
+            lines.append(f"{index}. {location}\n   일치: {reason}")
+        return ActionResult("파일 검색", "\n".join(lines))
 
     def search_web(self, query: str) -> ActionResult:
         try:
@@ -138,6 +198,181 @@ def duckduckgo_search(query: str, max_results: int = 5) -> list[dict[str, str]]:
         if len(results) >= max_results:
             break
     return results
+
+
+def fetch_weather(location: str) -> str:
+    encoded = urllib.parse.quote(location)
+    response = requests.get(f"https://wttr.in/{encoded}?format=j1&lang=ko", timeout=15)
+    response.raise_for_status()
+    response.encoding = "utf-8"
+    payload = response.json()
+
+    current = payload["current_condition"][0]
+    area = payload.get("nearest_area", [{}])[0]
+    area_name = area.get("areaName", [{}])[0].get("value", location)
+    country = area.get("country", [{}])[0].get("value", "")
+    condition = current.get("lang_ko", current.get("weatherDesc", [{"value": ""}]))[0].get("value", "")
+    temp = current.get("temp_C", "?")
+    feels_like = current.get("FeelsLikeC", "?")
+    humidity = current.get("humidity", "?")
+    wind = current.get("windspeedKmph", "?")
+    rain = current.get("precipMM", "0")
+
+    today = payload.get("weather", [{}])[0]
+    hourly = today.get("hourly", [])
+    chance_of_rain = max((int(item.get("chanceofrain", 0)) for item in hourly), default=0)
+    high = today.get("maxtempC", "?")
+    low = today.get("mintempC", "?")
+
+    place = f"{area_name}, {country}".strip(", ")
+    return (
+        f"{place} 현재 날씨는 {condition or '확인됨'}입니다.\n"
+        f"현재 {temp}도, 체감 {feels_like}도, 오늘 최저 {low}도 / 최고 {high}도입니다.\n"
+        f"습도 {humidity}%, 바람 {wind}km/h, 강수량 {rain}mm, 오늘 비 올 확률은 최대 {chance_of_rain}%입니다."
+    )
+
+
+def extract_weather_location(text: str) -> str:
+    aliases = {
+        "서울": "Seoul",
+        "부산": "Busan",
+        "인천": "Incheon",
+        "대구": "Daegu",
+        "대전": "Daejeon",
+        "광주": "Gwangju",
+        "울산": "Ulsan",
+        "제주": "Jeju",
+        "뉴욕": "New York",
+        "런던": "London",
+        "도쿄": "Tokyo",
+    }
+    for korean, english in aliases.items():
+        if korean in text:
+            return english
+
+    cleaned = text
+    for token in ["오늘", "내일", "현재", "날씨", "기온", "알려줘", "어때", "어떤지", "좀"]:
+        cleaned = cleaned.replace(token, " ")
+    return compact_whitespace(cleaned)
+
+
+def extract_url(text: str) -> str:
+    match = re.search(r"https?://\S+", text)
+    return match.group(0).rstrip(".,)") if match else ""
+
+
+def fetch_page_text(url: str) -> tuple[str, str]:
+    response = requests.get(
+        url,
+        headers={
+            "User-Agent": (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+            )
+        },
+        timeout=20,
+    )
+    response.raise_for_status()
+    soup = BeautifulSoup(response.text, "html.parser")
+    for tag in soup(["script", "style", "nav", "footer", "header", "noscript"]):
+        tag.decompose()
+    title = compact_whitespace(soup.title.get_text(" ")) if soup.title else url
+    text = compact_whitespace(soup.get_text(" "))
+    return title, text
+
+
+def extract_file_query(text: str) -> str:
+    cleaned = text
+    for token in [
+        "내 컴퓨터",
+        "저장공간",
+        "파일",
+        "폴더",
+        "문서",
+        "찾아줘",
+        "찾아",
+        "검색해줘",
+        "검색",
+        "어디",
+        "뒤져봐",
+        "뒤져",
+        "에서",
+    ]:
+        cleaned = cleaned.replace(token, " ")
+    return compact_whitespace(cleaned)
+
+
+def find_local_files(query: str) -> list[dict[str, str]]:
+    roots = configured_file_roots()
+    query_lower = query.lower()
+    max_results = int(os.getenv("JARVIS_FILE_SEARCH_MAX_RESULTS", "12"))
+    max_files = int(os.getenv("JARVIS_FILE_SEARCH_MAX_FILES", "8000"))
+    results: list[dict[str, str]] = []
+    scanned = 0
+
+    for root in roots:
+        if not root.exists():
+            continue
+        for dirpath, dirnames, filenames in os.walk(root):
+            dirnames[:] = [name for name in dirnames if should_scan_dir(name)]
+            for filename in filenames:
+                scanned += 1
+                if scanned > max_files or len(results) >= max_results:
+                    return results
+
+                path = Path(dirpath) / filename
+                filename_lower = filename.lower()
+                if query_lower in filename_lower:
+                    results.append({"path": str(path), "match": "파일명"})
+                    continue
+
+                if should_scan_file_content(path) and file_contains(path, query_lower):
+                    results.append({"path": str(path), "match": "파일 내용"})
+    return results
+
+
+def configured_file_roots() -> list[Path]:
+    configured = os.getenv("JARVIS_FILE_SEARCH_ROOTS", "")
+    if configured:
+        return [Path(item).expanduser() for item in configured.split(",") if item.strip()]
+
+    home = Path.home()
+    return [home]
+
+
+def should_scan_dir(name: str) -> bool:
+    blocked = {
+        ".git",
+        ".venv",
+        "__pycache__",
+        "node_modules",
+        "Library",
+        "Applications",
+        "System",
+        "Pictures",
+        "Movies",
+        "Music",
+    }
+    return not name.startswith(".") and name not in blocked
+
+
+def should_scan_file_content(path: Path) -> bool:
+    if path.name.startswith("."):
+        return False
+    if path.suffix.lower() not in {".txt", ".md", ".csv", ".json", ".py", ".js", ".html", ".css", ".log"}:
+        return False
+    try:
+        return path.stat().st_size <= 1_000_000
+    except OSError:
+        return False
+
+
+def file_contains(path: Path, query_lower: str) -> bool:
+    try:
+        content = path.read_text(errors="ignore")
+    except OSError:
+        return False
+    return query_lower in content.lower()
 
 
 def normalize_duckduckgo_url(url: str) -> str:

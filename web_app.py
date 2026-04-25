@@ -60,7 +60,10 @@ def ask(request: AskRequest) -> AskResponse:
     try:
         intent = brain.analyze_intent(request.text.strip())
         result = actions.run(intent.intent, intent.content)
-        answer = f"[{result.title}]\n{result.content}"
+        if result.title == "일반 응답":
+            answer = result.content
+        else:
+            answer = f"[{result.title}]\n{result.content}"
         return AskResponse(answer=answer, intent=intent.intent)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc

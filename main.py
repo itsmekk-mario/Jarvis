@@ -10,12 +10,12 @@ EXIT_WORDS = {"exit", "quit", "q", "종료", "그만", "끝"}
 
 
 def main() -> None:
-    brain = JarvisBrain(model="qwen3:4b")
+    brain = JarvisBrain()
     memory = ScheduleMemory()
     actions = JarvisActions(brain=brain, memory=memory)
 
     print("Jarvis 로컬 AI 비서가 시작되었습니다.")
-    print("Ollama 모델: qwen3:4b")
+    print(f"Ollama 모델: {brain.model}")
     print("종료하려면 '종료' 또는 'exit'를 입력하세요.\n")
 
     while True:
