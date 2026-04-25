@@ -51,6 +51,13 @@ def env_int(name: str, default: int) -> int:
         return default
 
 
+def env_bool(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 @dataclass
 class IntentResult:
     intent: str
@@ -136,7 +143,6 @@ class JarvisBrain:
             "model": self.model,
             "messages": messages,
             "stream": False,
-            "think": False,
             "keep_alive": "10m",
             "options": {
                 "temperature": 0.2,
@@ -144,6 +150,8 @@ class JarvisBrain:
                 "num_predict": num_predict,
             },
         }
+        if env_bool("OLLAMA_THINK"):
+            payload["think"] = True
         if json_mode:
             payload["format"] = "json"
 
@@ -159,16 +167,22 @@ class JarvisBrain:
                 "Ollama 서버에 연결할 수 없습니다. 먼저 `ollama serve`가 실행 중인지 확인하세요."
             ) from exc
         except requests.HTTPError as exc:
-            raise OllamaError(f"Ollama API 오류: {exc}") from exc
+            detail = response.text.strip()
+            if len(detail) > 500:
+                detail = f"{detail[:500]}..."
+            message = f"Ollama API 오류: {exc}"
+            if detail:
+                message = f"{message}\n응답 내용: {detail}"
+            raise OllamaError(message) from exc
         except requests.RequestException as exc:
             raise OllamaError(f"Ollama 요청 실패: {exc}") from exc
 
         data = response.json()
         message = data.get("message", {})
-        content = message.get("content", "")
+        content = strip_thinking(str(message.get("content", "")))
         if not content:
             raise OllamaError("Ollama가 빈 응답을 반환했습니다.")
-        return str(content)
+        return content
 
     def _parse_intent_json(self, raw: str, fallback_text: str) -> IntentResult:
         data: dict[str, Any] | None = None
@@ -242,3 +256,8 @@ class JarvisBrain:
         if any(word in compact for word in ["열어줘", "실행해", "켜줘"]) or "open " in lowered:
             return IntentResult("open_app", text)
         return IntentResult("unknown", text)
+
+
+def strip_thinking(text: str) -> str:
+    cleaned = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL | re.IGNORECASE)
+    return cleaned.strip()

@@ -135,6 +135,7 @@ JARVIS_FILE_SEARCH_ROOTS=C:\Users\your-name\Documents,C:\Users\your-name\Desktop
 | `OLLAMA_TIMEOUT` | `240` | Ollama 요청 타임아웃 초 |
 | `OLLAMA_NUM_CTX` | `2048` | 모델 컨텍스트 크기 |
 | `OLLAMA_NUM_PREDICT` | `768` | 일반 응답 최대 생성 토큰 |
+| `OLLAMA_THINK` | `false` | `true`로 설정하면 Ollama `think` 옵션을 켭니다 |
 | `JARVIS_DEFAULT_LOCATION` | `Seoul` | 날씨 조회 기본 지역 |
 | `JARVIS_FILE_SEARCH_ROOTS` | 홈 디렉터리 | 쉼표로 구분한 파일 검색 경로 |
 | `JARVIS_FILE_SEARCH_MAX_RESULTS` | `12` | 파일 검색 최대 결과 수 |
@@ -322,6 +323,33 @@ ollama pull qwen3:4b
 ```
 
 또는 `.env`에 설정한 모델명을 확인합니다.
+
+### Windows에서 Ollama 500 오류가 나는 경우
+
+먼저 Ollama가 정상 응답하는지 확인합니다.
+
+```powershell
+ollama list
+ollama run qwen3:4b "안녕"
+```
+
+모델이 없으면 다시 내려받습니다.
+
+```powershell
+ollama pull qwen3:4b
+```
+
+Jarvis가 사용하는 API를 직접 확인하려면 PowerShell에서 실행합니다.
+
+```powershell
+Invoke-RestMethod `
+  -Uri http://127.0.0.1:11434/api/chat `
+  -Method Post `
+  -ContentType "application/json" `
+  -Body '{"model":"qwen3:4b","messages":[{"role":"user","content":"안녕"}],"stream":false}'
+```
+
+여기서도 500이 나면 Jarvis 문제가 아니라 Ollama 또는 모델 실행 문제입니다. Ollama를 재시작하거나 모델을 다시 pull하고, 그래도 안 되면 Ollama를 최신 버전으로 업데이트하세요.
 
 ### Web UI 실행 시 `fastapi` 또는 `uvicorn` 오류가 나는 경우
 
